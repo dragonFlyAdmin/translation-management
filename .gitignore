@@ -1,5 +1,8 @@
 vendor/
 node_modules/
+.editorconfig
+composer.lock
+prefill.php
 
 # Laravel 4 specific
 bootstrap/compiled.php

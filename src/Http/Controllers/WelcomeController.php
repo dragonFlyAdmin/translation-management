@@ -29,7 +29,7 @@ class WelcomeController
     {
         $groups = $this->manager->loadGroups();
         
-        return view('welcome')
+        return view('translations-manager::welcome')
             ->with('locales', $this->manager->loadLocales())
             ->with('groups', $groups)
             ->with('defaultLocale', config('app.locale'))
