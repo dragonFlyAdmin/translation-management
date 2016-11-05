@@ -69,7 +69,7 @@ class TranslationManagerServiceProvider extends ServiceProvider
     protected function bootAssets()
     {
         $this->publishes([
-            __DIR__.'../resources/assets' => public_path('dragonfly/translations'),
+            __DIR__.'../resources/assets' => resource_path('assets/js/dragonfly/translations'),
         ], 'assets');
     }
     

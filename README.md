@@ -18,6 +18,57 @@ Via Composer
 $ composer require DragonFly/TranslationManager
 ```
 
+Add the service provider in your `app` config.
+
+```php
+    DragonFly\TranslationManager\TranslationManagerServiceProvider::class,
+```
+
+Publish the config file
+
+``` bash
+$ php artisan vendor:publish --tag=config
+```
+
+Run migrations
+
+``` bash
+$ php artisan migrate
+```
+
+#### Publish and compile assets
+
+First let's publish the assets to `resources/assets/js/dragonfly/translations`:
+
+``` bash
+$ php artisan vendor:publish --tag=assets
+```
+
+Next up we'll need to install a few packages from NPM.
+Laravel 5.3 comes bundled with Vue 2, Vue-resource 2 and Lodash 4.16, if you don't have them you need to install these as wel.
+
+``` bash
+$ npm install vuex vue-router
+```
+
+Next up you'll need to add this command to your `gulpfile.js`:
+
+```js
+mix..webpack('dragonfly/translations/app.js', './public/js/translations.js');
+```
+
+Now everything's set to compile, let's run gulp
+
+``` bash
+$ gulp
+```
+
+Publish the view (optional)
+
+``` bash
+$ php artisan vendor:publish --tag=view
+```
+
 ## Usage
 
 ``` php
