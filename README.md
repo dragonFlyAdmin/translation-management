@@ -105,12 +105,12 @@ If you discover any security related issues, please email maxim@happydemon.xyz i
 
 The MIT License (MIT). Please see [License File](LICENSE.md) for more information.
 
-[ico-version]: https://img.shields.io/packagist/v/DragonFly/TranslationManager.svg?style=flat-square
+[ico-version]: https://img.shields.io/packagist/v/dragonfly/translation-manager.svg?style=flat-square
 [ico-license]: https://img.shields.io/badge/license-MIT-brightgreen.svg?style=flat-square
-[ico-travis]: https://img.shields.io/travis/DragonFly/translation-management/master.svg?style=flat-square
-[ico-scrutinizer]: https://img.shields.io/scrutinizer/coverage/g/DragonFly/TranslationManager.svg?style=flat-square
-[ico-code-quality]: https://img.shields.io/scrutinizer/g/DragonFly/TranslationManager.svg?style=flat-square
-[ico-downloads]: https://img.shields.io/packagist/dt/DragonFly/TranslationManager.svg?style=flat-square
+[ico-travis]: https://img.shields.io/travis/dragonfly/translation-manager/master.svg?style=flat-square
+[ico-scrutinizer]: https://img.shields.io/scrutinizer/coverage/g/dragonfly/translation-manager.svg?style=flat-square
+[ico-code-quality]: https://img.shields.io/scrutinizer/g/dragonfly/translation-manager.svg?style=flat-square
+[ico-downloads]: https://img.shields.io/packagist/dt/dragonfly/translation-manager.svg?style=flat-square
 
 [link-packagist]: https://packagist.org/packages/dragonfly/translation-manager
 [link-travis]: https://travis-ci.org/dragonfly/translation-manager
