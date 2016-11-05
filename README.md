@@ -77,18 +77,18 @@ There a few options you can set after you've exported the `translations.php` con
 
 ### Routes
 
-*routes.prefix*: Set a prefix for the translation manager's routes.
-*routes.middleware*: Here you can assign extra middleware for the routes (perfect for auth restrictions).
+ - **routes.prefix**: Set a prefix for the translation manager's routes.
+ - **routes.middleware**: Here you can assign extra middleware for the routes (perfect for auth restrictions).
 
 ### Features
 
-*features.create_locales*: Toggle the possibility to create new locales.
-*features.create_delete_translations*: Toggle the possibility to delete single translation keys.
-*features.create_truncate_translations*: Toggle the possibility to truncate the entire translation database.
+ - **features.create_locales**: Toggle the possibility to create new locales.
+ - **features.create_delete_translations**: Toggle the possibility to delete single translation keys.
+ - **features.create_truncate_translations**: Toggle the possibility to truncate the entire translation database.
 
 ### Group exclusion
 
-*exclude_groups*: Define translation groups you don't want to show up in this tool.
+ - **exclude_groups**: Define translation groups you don't want to show up in this tool.
 
 ## Change log
 
