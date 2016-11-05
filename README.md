@@ -15,7 +15,7 @@ A customizable laravel translation management SPA built with vue.
 Via Composer
 
 ``` bash
-$ composer require DragonFly/TranslationManager
+$ composer require dragonfly/translation-manager
 ```
 
 Add the service provider in your `app` config.
@@ -34,6 +34,12 @@ Run migrations
 
 ``` bash
 $ php artisan migrate
+```
+
+Publish the view (optional)
+
+``` bash
+$ php artisan vendor:publish --tag=view
 ```
 
 #### Publish and compile assets
@@ -61,12 +67,6 @@ Now everything's set to compile, let's run gulp
 
 ``` bash
 $ gulp
-```
-
-Publish the view (optional)
-
-``` bash
-$ php artisan vendor:publish --tag=view
 ```
 
 ## Usage
