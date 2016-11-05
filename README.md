@@ -10,6 +10,8 @@
 
 A customizable laravel translation management SPA built with vue.
 
+This was originally planned to be just a fork of [barryvdh/laravel-translation-manager](https://github.com/barryvdh/laravel-translation-manager), but the amount of changes I made were substantial enough for me to split it off and present it to you like this.
+
 ## Install
 
 Via Composer
@@ -60,7 +62,7 @@ $ npm install vuex vue-router
 Next up you'll need to add this command to your `gulpfile.js`:
 
 ```js
-mix..webpack('dragonfly/translations/app.js', './public/js/translations.js');
+mix.webpack('dragonfly/translations/app.js', './public/js/translations.js');
 ```
 
 Now everything's set to compile, let's run gulp
