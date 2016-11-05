@@ -112,10 +112,10 @@ The MIT License (MIT). Please see [License File](LICENSE.md) for more informatio
 [ico-code-quality]: https://img.shields.io/scrutinizer/g/DragonFly/TranslationManager.svg?style=flat-square
 [ico-downloads]: https://img.shields.io/packagist/dt/DragonFly/TranslationManager.svg?style=flat-square
 
-[link-packagist]: https://packagist.org/packages/DragonFly/TranslationManager
-[link-travis]: https://travis-ci.org/DragonFly/TranslationManager
-[link-scrutinizer]: https://scrutinizer-ci.com/g/DragonFly/TranslationManager/code-structure
-[link-code-quality]: https://scrutinizer-ci.com/g/DragonFly/TranslationManager
-[link-downloads]: https://packagist.org/packages/DragonFly/TranslationManager
+[link-packagist]: https://packagist.org/packages/dragonfly/translation-manager
+[link-travis]: https://travis-ci.org/dragonfly/translation-manager
+[link-scrutinizer]: https://scrutinizer-ci.com/g/dragonfly/translation-manager/code-structure
+[link-code-quality]: https://scrutinizer-ci.com/g/dragonfly/translation-manager
+[link-downloads]: https://packagist.org/packages/dragonfly/translation-manager
 [link-author]: https://github.com/happyDemon
 [link-contributors]: ../../contributors
