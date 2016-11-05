@@ -59,7 +59,7 @@ class TranslationManagerServiceProvider extends ServiceProvider
         $this->loadViewsFrom($viewPath, 'translations-manager');
         
         $this->publishes([
-            $viewPath => base_path('resources/views/vendor/translations-manager'),
+            $viewPath => resource_path('views/vendor/translations-manager'),
         ], 'views');
     }
     
@@ -69,7 +69,7 @@ class TranslationManagerServiceProvider extends ServiceProvider
     protected function bootAssets()
     {
         $this->publishes([
-            __DIR__.'../resources/assets' => resource_path('assets/js/dragonfly/translations'),
+            __DIR__.'/../resources/assets' => resource_path('assets/js/dragonfly/translations'),
         ], 'assets');
     }
     

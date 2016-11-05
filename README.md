@@ -62,7 +62,7 @@ $ npm install vuex vue-router
 Next up you'll need to add this command to your `gulpfile.js`:
 
 ```js
-mix.webpack('dragonfly/translations/app.js', './public/js/translations.js');
+mix.webpack('dragonfly/translations/app.js', './public/js/dragonfly-translations.js');
 ```
 
 Now everything's set to compile, let's run gulp
@@ -71,12 +71,24 @@ Now everything's set to compile, let's run gulp
 $ gulp
 ```
 
-## Usage
+## Configuration
 
-``` php
-$skeleton = new DragonFly\TranslationManager();
-echo $skeleton->echoPhrase('Hello, League!');
-```
+There a few options you can set after you've exported the `translations.php` config file.
+
+### Routes
+
+*routes.prefix*: Set a prefix for the translation manager's routes.
+*routes.middleware*: Here you can assign extra middleware for the routes (perfect for auth restrictions).
+
+### Features
+
+*features.create_locales*: Toggle the possibility to create new locales.
+*features.create_delete_translations*: Toggle the possibility to delete single translation keys.
+*features.create_truncate_translations*: Toggle the possibility to truncate the entire translation database.
+
+### Group exclusion
+
+*exclude_groups*: Define translation groups you don't want to show up in this tool.
 
 ## Change log
 
