@@ -20,6 +20,11 @@
         </div>
         <div class="col-md-8 text-right">
             <div class="btn-group" role="group" aria-label="Translation group actions">
+                <button @click="openCreate" type="button" :class="loading.create" data-toggle="tooltip"
+                        data-placement="top"
+                        title="Create new keys for the current group">
+                    Create
+                </button>
                 <button @click="importAppend" type="button" :class="loading.importAppend" data-toggle="tooltip"
                         data-placement="top"
                         title="Append existing (local) translations to the ones you see.">
@@ -86,6 +91,33 @@
                 </div>
                 <button @click="saveKey" slot="button" type="button" class="btn btn-primary">Save changes</button>
             </modal>
+            <modal id="new-strings" title="Create new keys">
+                <div slot="content">
+                    <div class="form">
+                        <div class="alert alert-warning" v-if="createError">
+                            {{createError}}
+                        </div>
+                        <div class="row" style="padding-bottom: 10px;">
+                            <div class="col-md-12 text-right">
+                                <button @click="addNewEmptyKey" class="btn btn-sm btn-default">
+                                    <i class="glyphicon glyphicon-plus"></i>
+                                </button>
+                            </div>
+                        </div>
+                        <div class="row" v-for="(key, index) in newKeys" style="padding-bottom: 5px;">
+                            <div class="col-md-12">
+                                <div class="input-group">
+                                    <input type="text" v-model="key.value" class="form-control input-sm" />
+                                    <span class="input-group-btn">
+                                        <button @click="newKeys.splice(index, 1)" class="btn btn-danger btn-sm"><i class="glyphicon glyphicon-remove"></i></button>
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <button @click="createKeys" slot="button" type="button" class="btn btn-primary">Save new keys</button>
+            </modal>
         </div>
     </div>
 </template>
@@ -110,6 +142,9 @@
                 rowWarning: -1,
                 formError: false,
                 loading: {
+                    create: {
+                        btn: true, 'btn-primary': true, disabled: false
+                    },
                     importAppend: {
                         btn: true, 'btn-default': true, disabled: false
                     },
@@ -119,7 +154,9 @@
                     exportGroup: {
                         btn: true, 'btn-success': true, disabled: false
                     }
-                }
+                },
+                newKeys: [],
+                createError: false,
             }
         },
         computed: {
@@ -166,6 +203,72 @@
                 return _.size(_.reject(string.locales, (l) => {
                             return l.status == 0
                         })) > 0;
+            },
+            openCreate(){
+                this.newKeys = [];
+                this.addNewEmptyKey();
+                this.createError = false;
+                var self = this;
+
+                // Reset row editing on close (which should only happen once)
+                $('#new-strings').modal('show').one('hide.bs.modal', () => {
+                    self.newKeys = [];
+                    self.createError = false;
+                });
+            },
+            addNewEmptyKey() {
+                this.newKeys.push({
+                    value: '',
+                    error: false
+                });
+            },
+            createKeys() {
+                // If already loading, do nothing
+                if(this.loading.create.disabled)
+                    return;
+
+                // Remove any empty values
+                this.newKeys = _.pickBy(this.newKeys, (k) => { return k.value != ''});
+
+                // Start loader
+                this.loading.create.disabled = true;
+
+                this.$http.post(laroute.route('translations.keys.create', {group: this.$route.params.group}), {locale: this.$store.state.locale,keys: this.newKeys})
+                        .then((response) => {
+                            switch(response.body.status)
+                            {
+                                case 'success':
+                                    if(response.body.errors > 0)
+                                    {
+                                        this.newKeys = _.reduce(response.body.keys, ['error', false]);
+                                        this.createError = 'Not all keys could be created';
+                                    }
+                                    else
+                                    {
+                                        $('#new-strings').modal('hide');
+
+                                        // reload the translations
+                                        this.loadGroup({group: this.$route.params.group})
+                                    }
+                                    break;
+                                case 'error':
+                                    let self = this;
+                                    this.createError = response.body.message;
+
+                                    // Mark all as errored
+                                    _.each(this.newKeys, function(key, index){
+                                        self.newKeys[index].error = true;
+                                    })
+                                    break;
+                            }
+                        })
+                        .catch((response) => {
+                            this.createError = 'The server had a hiccup';
+                            console.log(response);
+                        })
+                        .finally(() => {
+                            this.loading.create.disabled = false;
+                        });
             },
             deleteString(string) {
                 this.rowWarning = string.key;
@@ -281,6 +384,10 @@
                 });
             },
             _btnRequest(key, route, success) {
+                // If already loading, do nothing
+                if(this.loading[key].disabled)
+                    return;
+
                 // Start button loader
                 this.loading[key].disabled = true;
 

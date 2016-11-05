@@ -51,12 +51,11 @@ class KeyController
     /**
      * Remove all locales for a specific key in the database.
      *
-     * @param \Illuminate\Http\Request $request
      * @param string                   $group
      *
      * @return \Illuminate\Http\JsonResponse
      */
-    public function deleteRemoveKey(Request $request, $group, $key)
+    public function deleteRemoveKey($group, $key)
     {
         if (!$this->manager->getConfig('features')['delete_translations'])
         {
@@ -83,6 +82,53 @@ class KeyController
             'groups' => $this->manager->loadGroups(),
             'locales' => $this->manager->loadLocales(),
             'changed' => $this->manager->loadAmountChangedRecords(),
+        ]);
+    }
+    
+    public function postCreateKeys(Request $request, $group)
+    {
+        $newKeys = $request->input('keys');
+        $locale = $request->input('locale');
+        
+        $errors = 0;
+        
+        foreach($newKeys as $i => $key)
+        {
+            // Mark it as an error if it already exists
+            if(TranslationString::where('group', $group)->where('key', $key['value'])->count() > 0)
+            {
+                $newKeys[$i]['error'] = true;
+                $errors++;
+                continue;
+            }
+            
+            // Create the new key
+            TranslationString::create([
+                'group' => $group,
+                'key' => $key['value'],
+                'value' => null,
+                'locale' => $locale
+            ]);
+        }
+        
+        // Calculate the successfully created keys
+        $successfulSaves = count($newKeys) - $errors;
+        
+        // Error out if none were created
+        if($successfulSaves == 0)
+        {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'No keys were added, they all already exist.'
+            ]);
+        }
+        
+        // (partial) success
+        return response()->json([
+            'status' => 'success',
+            'errors' => $errors,
+            'created' => $successfulSaves,
+            'keys' => $newKeys
         ]);
     }
 }
