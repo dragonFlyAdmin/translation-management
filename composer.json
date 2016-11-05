@@ -6,7 +6,7 @@
         "DragonFly", "Laravel", "translations", "Vue", "manager",
         "TranslationManager", "happyDemon"
     ],
-    "homepage": "https://github.com/DragonFly/TranslationManager",
+    "homepage": "https://github.com/DragonFly/translation-management",
     "license": "MIT",
     "authors": [
         {
