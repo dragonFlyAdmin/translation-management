@@ -2,6 +2,7 @@
 
 namespace DragonFly\TranslationManager;
 
+use DragonFly\TranslationManager\Managers\Laravel\Manager;
 use Illuminate\Routing\Router;
 use Illuminate\Support\ServiceProvider;
 
@@ -21,12 +22,12 @@ class TranslationManagerServiceProvider extends ServiceProvider
         $this->bootRoutes($router);
         $this->bootViews();
         $this->bootAssets();
-    
+        
         // Publish the config file
-        $this->publishes([__DIR__.$this->configPath => config_path('translations.php')], 'config');
+        $this->publishes([__DIR__ . $this->configPath => config_path('translations.php')], 'config');
         
         // Load migrations
-        $this->loadMigrationsFrom(__DIR__.'/../migrations');
+        $this->loadMigrationsFrom(__DIR__ . '/../migrations');
     }
     
     /**
@@ -69,7 +70,7 @@ class TranslationManagerServiceProvider extends ServiceProvider
     protected function bootAssets()
     {
         $this->publishes([
-            __DIR__.'/../resources/assets' => resource_path('assets/js/dragonfly/translations'),
+            __DIR__ . '/../resources/assets' => resource_path('assets/js/dragonfly/translations'),
         ], 'assets');
     }
     
@@ -81,6 +82,24 @@ class TranslationManagerServiceProvider extends ServiceProvider
     public function register()
     {
         // Merge the config
-        $this->mergeConfigFrom(__DIR__.$this->configPath, 'translations');
+        $this->mergeConfigFrom(__DIR__ . $this->configPath, 'translations');
+    
+        //Register the laravel translation manager
+        $this->app->singleton(
+            'DragonFly\TranslationManager\Managers\Laravel',
+            function ($app)
+            {
+                return $app->make('DragonFly\TranslationManager\Managers\Laravel\Manager');
+            }
+        );
+        
+        //Register the dimsav translation manager
+        $this->app->instance(
+            'DragonFly\TranslationManager\Managers\Dimsav',
+            function ($app)
+            {
+                return $app->make('DragonFly\TranslationManager\Managers\Dimsav\Manager');
+            }
+        );
     }
 }

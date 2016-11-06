@@ -3,55 +3,73 @@
 namespace DragonFly\TranslationManager\Http\Controllers;
 
 
-use DragonFly\TranslationManager\LaravelStringManager;
+use DragonFly\TranslationManager\Manager;
 use DragonFly\TranslationManager\Models\TranslationString;
 use Illuminate\Http\Request;
 
 class KeyController
 {
-    /** @var \DragonFly\TranslationManager\LaravelStringManager */
+    /** @var \DragonFly\TranslationManager\Managers\Template\Manager */
     protected $manager;
     
-    public function __construct(LaravelStringManager $manager)
+    public function __construct()
     {
-        $this->manager = $manager;
+        $this->manager = ( new Manager() )->make();
     }
     
+    /**
+     * Update a key in the specified group.
+     *
+     * @param \Illuminate\Http\Request $request
+     * @param string                   $group
+     *
+     * @return \Illuminate\Http\JsonResponse
+     */
     public function postSaveTranslation(Request $request, $group)
     {
         $key = $request->input('key');
         $locales = $request->input('locales');
         
-        // Loop over the locales
-        foreach($locales as $locale => $translation)
+        $this->manager->actions()->updateRecord($group, $key, $locales);
+        
+        return response()->json([
+            'status' => 'success',
+            'updates' => count($locales),
+            'changed' => $this->manager->meta()->loadAmountChangedRecords(),
+        ]);
+    }
+    
+    /**
+     * Replace the specified key with its local translations.
+     *
+     * @param \Illuminate\Http\Request $request
+     * @param string                   $group
+     *
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function postReplaceWithLocal(Request $request, $group)
+    {
+        $resetTranslations = $this->manager->actions()->replaceRecordWithLocal($group, $request->input('key'));
+        
+        if (!$resetTranslations)
         {
-            // Update or create the value for this key/locale/group
-            TranslationString::updateOrCreate([
-                'locale' => $locale,
-                'group' => $group,
-                'key' => $key
-            ], [
-                'status' => TranslationString::STATUS_CHANGED,
-                'value' => ($translation['value'] == '') ? null : $translation['value']
+            return response()->json([
+                'status' => 'error',
+                'message' => 'No locales were found for this key to reset.',
             ]);
         }
         
         return response()->json([
             'status' => 'success',
-            'updates' => count($locales),
-            'changed' => $this->manager->loadAmountChangedRecords(),
+            'changed' => $this->manager->meta()->loadAmountChangedRecords(),
+            'updates' => $resetTranslations,
         ]);
-    }
-    
-    public function postReplaceWithLocal(Request $request, $group)
-    {
-        
     }
     
     /**
      * Remove all locales for a specific key in the database.
      *
-     * @param string                   $group
+     * @param string $group
      *
      * @return \Illuminate\Http\JsonResponse
      */
@@ -65,70 +83,58 @@ class KeyController
             ]);
         }
         
-        $keys = TranslationString::where('group', $group)->where('key', $key);
-        
-        $keyCount = $keys->count();
-        
-        // remove locales for key in DB.
-        if($keyCount > 0)
-        {
-            $keys->delete();
-        }
+        $keyCount = $this->manager->actions()->removeRecord($group, $key);
         
         return response()->json([
             'status' => 'success',
-            'deleted_entries' => $keyCount,
-            'records' => $this->manager->uniqueKeys()->count(),
-            'groups' => $this->manager->loadGroups(),
-            'locales' => $this->manager->loadLocales(),
-            'changed' => $this->manager->loadAmountChangedRecords(),
+            'deleted_entries' => ( !$keyCount ) ? 0 : $keyCount,
+            'records' => $this->manager->meta()->uniqueKeys()->count(),
+            'groups' => $this->manager->meta()->loadGroups(),
+            'locales' => $this->manager->meta()->loadLocales(),
+            'changed' => $this->manager->meta()->loadAmountChangedRecords(),
         ]);
     }
     
+    /**
+     * Create new keys for the specified group.
+     *
+     * @param \Illuminate\Http\Request $request
+     * @param string                   $group
+     *
+     * @return \Illuminate\Http\JsonResponse
+     */
     public function postCreateKeys(Request $request, $group)
     {
+        if (!$this->manager->can('string.create'))
+        {
+            return response()->json([
+                'status' => 'unauthorized',
+                'message' => $this->manager->managerName . ' does not support creating new keys.',
+            ]);
+        }
+        
         $newKeys = $request->input('keys');
         $locale = $request->input('locale');
         
-        $errors = 0;
-        
-        foreach($newKeys as $i => $key)
-        {
-            // Mark it as an error if it already exists
-            if(TranslationString::where('group', $group)->where('key', $key['value'])->count() > 0)
-            {
-                $newKeys[$i]['error'] = true;
-                $errors++;
-                continue;
-            }
-            
-            // Create the new key
-            TranslationString::create([
-                'group' => $group,
-                'key' => $key['value'],
-                'value' => null,
-                'locale' => $locale
-            ]);
-        }
-        
-        // Calculate the successfully created keys
-        $successfulSaves = count($newKeys) - $errors;
+        $createdRecords = $this->manager->actions()->createRecords($group, $newKeys, $locale);
         
         // Error out if none were created
-        if($successfulSaves == 0)
+        if ($createdRecords === false)
         {
             return response()->json([
                 'status' => 'error',
-                'message' => 'No keys were added, they all already exist.'
+                'message' => 'No keys were added, they all already exist.',
             ]);
         }
+        
+        list( $successfulSaves, $errors, $newKeys ) = $createdRecords;
         
         // (partial) success
         return response()->json([
             'status' => 'success',
             'errors' => $errors,
             'created' => $successfulSaves,
-            'keys' => $newKeys
+            'keys' => $newKeys,
         ]);
     }
 }

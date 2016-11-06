@@ -3,17 +3,16 @@
 namespace DragonFly\TranslationManager\Http\Controllers;
 
 
-
-use DragonFly\TranslationManager\LaravelStringManager;
+use DragonFly\TranslationManager\Manager;
 
 class exportController
 {
-    /** @var \DragonFly\TranslationManager\LaravelStringManager */
+    /** @var \DragonFly\TranslationManager\Managers\BaseManager */
     protected $manager;
     
-    public function __construct(LaravelStringManager $manager)
+    public function __construct()
     {
-        $this->manager = $manager;
+        $this->manager = (new Manager())->make();
     }
     
     /**
@@ -23,7 +22,7 @@ class exportController
      */
     public function getExport()
     {
-        $this->manager->exportTranslations('*');
+        $this->manager->actions()->export('*');
         
         return response()->json([
             'status' => 'success'
@@ -39,11 +38,11 @@ class exportController
      */
     public function getExportGroup($group)
     {
-        $this->manager->exportTranslations($group);
+        $this->manager->actions()->export($group);
         
         return response()->json([
             'status' => 'success',
-            'changed' => $this->manager->loadAmountChangedRecords()
+            'changed' => $this->manager->meta()->loadAmountChangedRecords()
         ]);
     }
 }

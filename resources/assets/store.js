@@ -14,7 +14,7 @@ const state = {
     locales: window.locales,
     stats: window.stats,
     features: window.features,
-    groups: {},
+    groups: window.groups,
 };
 
 const mutations = {
@@ -84,7 +84,7 @@ const mutations = {
         {
             // Loop over the group's strings
             _.each(
-                state.translations[payload].data,
+                state.translations[groupIndex].data,
                 (string, index) => {
                     // Loop over the string locales to change their status.
                     _.each(
@@ -93,7 +93,7 @@ const mutations = {
                             // Only if the locale has valid value
                             if(l.value != '' && l.value != null)
                             {
-                                state.translations[payload].data[index].locales[key].status = 0;
+                                state.translations[groupIndex].data[index].locales[key].status = 0;
                             }
                         }
                     );
@@ -105,6 +105,7 @@ const mutations = {
 
 const getters = {
     groupCount(state) {
+        console.log('groups: ', _.keys(state.groups));
         return _.keys(state.groups).length - 1;
     }
 };

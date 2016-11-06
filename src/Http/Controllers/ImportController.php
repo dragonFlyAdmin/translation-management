@@ -3,17 +3,16 @@
 namespace DragonFly\TranslationManager\Http\Controllers;
 
 
-
-use DragonFly\TranslationManager\LaravelStringManager;
+use DragonFly\TranslationManager\Manager;
 
 class ImportController
 {
-    /** @var \DragonFly\TranslationManager\LaravelStringManager */
+    /** @var \DragonFly\TranslationManager\Managers\Template\Manager */
     protected $manager;
     
-    public function __construct(LaravelStringManager $manager)
+    public function __construct()
     {
-        $this->manager = $manager;
+        $this->manager = (new Manager())->make();
     }
     
     /**
@@ -23,14 +22,22 @@ class ImportController
      */
     public function getScan()
     {
-        $importedKeys = $this->manager->scanForTranslations();
+        if(!$this->manager->can('scan'))
+        {
+            return response()->json([
+                'status' => 'unauthorized',
+                'message' => $this->manager->managerName . ' does not offer "scan".',
+            ]);
+        }
+        
+        $importedKeys = $this->manager->actions()->scan();
         
         return response()->json([
             'status' => 'success',
-            'records' => $this->manager->uniqueKeys()->count(),
+            'records' => $this->manager->meta()->uniqueKeys()->count(),
             'scanned' => $importedKeys,
-            'groups' => $this->manager->loadGroups(),
-            'locales' => $this->manager->loadLocales()
+            'groups' => $this->manager->meta()->loadGroups(),
+            'locales' => $this->manager->meta()->loadLocales()
         ]);
     }
     
@@ -41,14 +48,14 @@ class ImportController
      */
     public function getAppend()
     {
-        $importedKeys = $this->manager->importTranslations(false);
+        $importedKeys = $this->manager->actions()->import('*', false);
         
         return response()->json([
             'status' => 'success',
-            'records' => $this->manager->uniqueKeys()->count(),
+            'records' => $this->manager->meta()->uniqueKeys()->count(),
             'imported' => $importedKeys,
-            'groups' => $this->manager->loadGroups(),
-            'locales' => $this->manager->loadLocales()
+            'groups' => $this->manager->meta()->loadGroups(),
+            'locales' => $this->manager->meta()->loadLocales()
         ]);
     }
     
@@ -61,14 +68,14 @@ class ImportController
      */
     public function getAppendGroup($group)
     {
-        $importedKeys = $this->manager->importGroupTranslations($group, false);
+        $importedKeys = $this->manager->actions()->import($group, false);
         
         return response()->json([
             'status' => 'success',
             'imported' => $importedKeys,
-            'records' => $this->manager->uniqueKeys()->count(),
-            'groups' => $this->manager->loadGroups(),
-            'locales' => $this->manager->loadLocales()
+            'records' => $this->manager->meta()->uniqueKeys()->count(),
+            'groups' => $this->manager->meta()->loadGroups(),
+            'locales' => $this->manager->meta()->loadLocales()
         ]);
     }
     
@@ -79,15 +86,15 @@ class ImportController
      */
     public function getReplace()
     {
-        $importedKeys = $this->manager->importTranslations(true);
+        $importedKeys = $this->manager->actions()->import('*', true);
         
         return response()->json([
             'status' => 'success',
             'imported' => $importedKeys,
-            'records' => $this->manager->uniqueKeys()->count(),
-            'groups' => $this->manager->loadGroups(),
-            'locales' => $this->manager->loadLocales(),
-            'changed' => $this->manager->loadAmountChangedRecords()
+            'records' => $this->manager->meta()->uniqueKeys()->count(),
+            'groups' => $this->manager->meta()->loadGroups(),
+            'locales' => $this->manager->meta()->loadLocales(),
+            'changed' => $this->manager->meta()->loadAmountChangedRecords()
         ]);
     }
     
@@ -100,15 +107,15 @@ class ImportController
      */
     public function getReplaceGroup($group)
     {
-        $importedKeys = $this->manager->importGroupTranslations($group, true);
+        $importedKeys = $this->manager->actions()->import($group, true);
         
         return response()->json([
             'status' => 'success',
-            'records' => $this->manager->uniqueKeys()->count(),
+            'records' => $this->manager->meta()->uniqueKeys()->count(),
             'imported' => $importedKeys,
-            'groups' => $this->manager->loadGroups(),
-            'locales' => $this->manager->loadLocales(),
-            'changed' => $this->manager->loadAmountChangedRecords()
+            'groups' => $this->manager->meta()->loadGroups(),
+            'locales' => $this->manager->meta()->loadLocales(),
+            'changed' => $this->manager->meta()->loadAmountChangedRecords()
         ]);
     }
 }

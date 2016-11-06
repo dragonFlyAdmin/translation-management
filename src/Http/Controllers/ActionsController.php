@@ -3,19 +3,17 @@
 namespace DragonFly\TranslationManager\Http\Controllers;
 
 
-
-use DragonFly\TranslationManager\LaravelStringManager;
-use DragonFly\TranslationManager\Models\TranslationString;
+use DragonFly\TranslationManager\Manager;
 use Illuminate\Http\Request;
 
 class ActionsController
 {
-    /** @var \DragonFly\TranslationManager\LaravelStringManager */
+    /** @var \DragonFly\TranslationManager\Managers\BaseManager */
     protected $manager;
     
-    public function __construct(LaravelStringManager $manager)
+    public function __construct()
     {
-        $this->manager = $manager;
+        $this->manager = (new Manager())->make();
     }
     
     /**
@@ -25,14 +23,14 @@ class ActionsController
      */
     public function getClean()
     {
-        $this->manager->cleanTranslations();
+        $this->manager->actions()->clean();
         
         return response()->json([
             'status' => 'success',
-            'records' => $this->manager->uniqueKeys()->count(),
-            'groups' => $this->manager->loadGroups(),
-            'locales' => $this->manager->loadLocales(),
-            'changed' => $this->manager->loadAmountChangedRecords()
+            'records' => $this->manager->meta()->uniqueKeys()->count(),
+            'groups' => $this->manager->meta()->loadGroups(),
+            'locales' => $this->manager->meta()->loadLocales(),
+            'changed' => $this->manager->meta()->loadAmountChangedRecords()
         ]);
     }
     
@@ -43,7 +41,7 @@ class ActionsController
      */
     public function getTruncate()
     {
-        $this->manager->truncateTranslations();
+        $this->manager->actions()->truncate();
         
         return response()->json([
             'status' => 'success'
@@ -59,40 +57,28 @@ class ActionsController
      */
     public function postCreateLocale(Request $request)
     {
+        // Check if the manager supports this feature
+        if(!$this->manager->can('locale.create'))
+        {
+            return response()->json([
+                'status' => 'impossible'
+            ]);
+        }
+    
         $newLocale = $request->input('locale');
+        $createdLocaleKeys = $this->manager->actions()->createLocale($newLocale);
         
-        // Check if it already exists
-        if(TranslationString::where('locale', $newLocale)->count() > 0)
+        // Check if it performed
+        if($createdLocaleKeys === false)
         {
             return response()->json([
                 'status' => 'on_record'
             ]);
         }
         
-        $addedKeys = 0;
-        
-        // Loop over the unique keys and add the new locale with a null value
-        $this->manager
-            ->uniqueKeys(['locale', $newLocale])
-            ->each(function($fullKey) use($newLocale, $addedKeys){
-                $values = explode('.', $fullKey);
-                $group = array_shift($values);
-                $key = implode('.', $values);
-                
-                TranslationString::create([
-                    'group' => $group,
-                    'key' => $key,
-                    'locale' => $newLocale,
-                    'value' => null,
-                    'status' => TranslationString::STATUS_CHANGED
-                ]);
-    
-                $addedKeys++;
-            });
-        
         return response()->json([
             'status' => 'success',
-            'added' => $addedKeys
+            'added' => $createdLocaleKeys
         ]);
     }
 }

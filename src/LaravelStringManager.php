@@ -11,7 +11,6 @@ use Symfony\Component\Finder\Finder;
 
 class LaravelStringManager
 {
-    
     /** @var \Illuminate\Foundation\Application */
     protected $app;
     /** @var \Illuminate\Filesystem\Filesystem */
@@ -298,16 +297,7 @@ class LaravelStringManager
      */
     public function exportAllTranslations()
     {
-        switch (DB::getDriverName())
-        {
-            case 'mysql':
-                $select = 'DISTINCT `group`';
-            break;
-            
-            default:
-                $select = 'DISTINCT "group"';
-            break;
-        }
+        $select = (DB::getDriverName() == 'mysql') ? 'DISTINCT `group`' : 'DISTINCT "group"';
         
         $groups = TranslationString::whereNotNull('value')->select(DB::raw($select))->get('group');
         

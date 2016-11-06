@@ -280,7 +280,11 @@
                         }))
                         .then((response) => {
                             // reload the translations
-                            this.loadGroup({group: this.$route.params.group})
+                            this.loadGroup({group: this.$route.params.group});
+
+                            // Update stats
+                            this.$store.commit('changeStat', {type: 'keys', value: response.body.records});
+                            this.$store.commit('changeStat', {type: 'changed', value: response.body.changed});
                         })
                         .catch((response) => {
                             // server error
@@ -290,7 +294,42 @@
                         })
             },
             resetToFile(string) {
+                // Start row loader
+                this.rowLoading = this.string.key;
 
+                // Send request
+                this.$http
+                        .post(laroute.route('translations.keys.local', {group: this.$route.params.group}), this.string)
+                        .then((response) => {
+                            switch (response.body.status) {
+                                case 'success':
+                                    this.rowError = -1;
+
+                                    this.$store.commit('changeStat', {type: 'changed', value: response.body.changed});
+
+                                    // reload translations
+                                    this.loadGroup({group: this.$route.params.group});
+
+                                    break;
+                                case 'error':
+                                    //this.formError = response.body.message;
+                                    console.log(response.body.message);
+                                    this.rowError = this.string.key;
+                                    break;
+                            }
+
+                            this.rowLoading = -1;
+                        })
+                        .catch((response) => {
+                            this.formError = 'There was an error whilst sending the request.';
+                            this.rowError = this.string.key;
+                            this.rowLoading = -1;
+                            console.log(response);
+                        })
+                        .finally(function () {
+                            // Stop button loader
+                            this.rowLoading = -1;
+                        });
             },
             openKey(string, key)
             {
@@ -356,7 +395,7 @@
                 this._btnRequest('exportGroup', 'translations.export.group', (response) => {
                     // group was exported
                     this.$store.commit('changeStat', {type: 'changed', value: response.body.changed});
-                    this.$nextTick(() => { this.$store.commit('markGroupSaved', this.$route.params.group);})
+                    this.$store.commit('markGroupSaved', this.$route.params.group);
                 });
             },
             importAppend(){

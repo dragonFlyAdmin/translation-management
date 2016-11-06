@@ -19,7 +19,7 @@ import router from './routes';
 
 import store from './store';
 
-const TranslationManager = new Vue({
+new Vue({
     router,
     store,
     data: {
@@ -32,7 +32,7 @@ const TranslationManager = new Vue({
             },
             {
                 route: {name: 'translations'},
-                name: 'Translations',
+                name: 'String translations',
                 actives: ['translations', 'group'],
                 show: (_.size(window.groups) > 1)
             }

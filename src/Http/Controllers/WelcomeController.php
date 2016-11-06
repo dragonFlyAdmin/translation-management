@@ -4,20 +4,18 @@ namespace DragonFly\TranslationManager\Http\Controllers;
 
 
 use Carbon\Carbon;
-use DragonFly\TranslationManager\LaravelStringManager;
+use DragonFly\TranslationManager\Manager;
 use DragonFly\TranslationManager\Models\TranslationString;
-use Illuminate\Http\Request;
-use Illuminate\Support\Collection;
 use Illuminate\View\View;
 
 class WelcomeController
 {
-    /** @var \DragonFly\TranslationManager\LaravelStringManager */
+    /** @var \DragonFly\TranslationManager\Managers\BaseManager */
     protected $manager;
     
-    public function __construct(LaravelStringManager $manager)
+    public function __construct()
     {
-        $this->manager = $manager;
+        $this->manager = (new Manager())->make();
     }
     
     /**
@@ -27,14 +25,14 @@ class WelcomeController
      */
     public function getIndex()
     {
-        $groups = $this->manager->loadGroups();
+        $groups = $this->manager->meta()->loadGroups();
         
         return view('translations-manager::welcome')
-            ->with('locales', $this->manager->loadLocales())
+            ->with('locales', $this->manager->meta()->loadLocales())
             ->with('groups', $groups)
             ->with('defaultLocale', config('app.locale'))
             ->with('stats', $this->loadStatistics($groups))
-            ->with('features', config('translations.features'));
+            ->with('features', $this->manager->getConfig('features'));
     }
     
     /**
@@ -46,12 +44,12 @@ class WelcomeController
      */
     protected function loadStatistics($groups)
     {
-        $uniqueKeys = $this->manager->uniqueKeys();
+        $uniqueKeys = $this->manager->meta()->uniqueKeys();
         
         return [
             'keys' => $uniqueKeys->count(), // unique keys (don't count locales)
             'groups' => count($groups), // unique groups
-            'changed' => $this->manager->loadAmountChangedRecords(),// keys that need to be saved
+            'changed' => $this->manager->meta()->loadAmountChangedRecords(),// keys that need to be saved
         ];
     }
     
