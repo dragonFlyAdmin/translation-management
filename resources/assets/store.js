@@ -105,7 +105,6 @@ const mutations = {
 
 const getters = {
     groupCount(state) {
-        console.log('groups: ', _.keys(state.groups));
         return _.keys(state.groups).length - 1;
     }
 };
@@ -119,7 +118,7 @@ const actions = {
     },
     loadGroup({dispatch, commit, state}, payload)
     {
-        let params = {group: payload.group};
+        let params = {manager: payload.manager, group: payload.group};
 
         // If the group is already registered, request for an update
         if (payload.group in state.translations) {

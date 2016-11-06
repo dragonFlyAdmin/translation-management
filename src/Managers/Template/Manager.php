@@ -58,7 +58,7 @@ abstract class Manager
      */
     public function meta()
     {
-        return new BaseMeta($this);
+        return new Meta($this);
     }
     
     /**

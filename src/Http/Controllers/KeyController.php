@@ -4,7 +4,6 @@ namespace DragonFly\TranslationManager\Http\Controllers;
 
 
 use DragonFly\TranslationManager\Manager;
-use DragonFly\TranslationManager\Models\TranslationString;
 use Illuminate\Http\Request;
 
 class KeyController
@@ -12,9 +11,9 @@ class KeyController
     /** @var \DragonFly\TranslationManager\Managers\Template\Manager */
     protected $manager;
     
-    public function __construct()
+    public function __construct(Router $router)
     {
-        $this->manager = ( new Manager() )->make();
+        $this->manager = (new Manager())->make($router->current()->parameter('manager', 'laravel'));
     }
     
     /**
@@ -25,7 +24,7 @@ class KeyController
      *
      * @return \Illuminate\Http\JsonResponse
      */
-    public function postSaveTranslation(Request $request, $group)
+    public function postSaveTranslation(Request $request, $manager, $group)
     {
         $key = $request->input('key');
         $locales = $request->input('locales');
@@ -47,7 +46,7 @@ class KeyController
      *
      * @return \Illuminate\Http\JsonResponse
      */
-    public function postReplaceWithLocal(Request $request, $group)
+    public function postReplaceWithLocal(Request $request, $manager, $group)
     {
         $resetTranslations = $this->manager->actions()->replaceRecordWithLocal($group, $request->input('key'));
         
@@ -73,7 +72,7 @@ class KeyController
      *
      * @return \Illuminate\Http\JsonResponse
      */
-    public function deleteRemoveKey($group, $key)
+    public function deleteRemoveKey($manager, $group, $key)
     {
         if (!$this->manager->getConfig('features')['delete_translations'])
         {
@@ -103,7 +102,7 @@ class KeyController
      *
      * @return \Illuminate\Http\JsonResponse
      */
-    public function postCreateKeys(Request $request, $group)
+    public function postCreateKeys(Request $request, $manager, $group)
     {
         if (!$this->manager->can('string.create'))
         {

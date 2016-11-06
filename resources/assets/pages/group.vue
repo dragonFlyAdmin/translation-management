@@ -14,7 +14,8 @@
             <div class="input-group">
                 <input type="text" class="form-control" placeholder="Search for..." v-model="filter">
                 <span class="input-group-btn">
-                <button @click="filter = ''" class="btn btn-default" type="button"><i class="glyphicon glyphicon-remove"></i></button>
+                <button @click="filter = ''" class="btn btn-default" type="button"><i
+                        class="glyphicon glyphicon-remove"></i></button>
               </span>
             </div>
         </div>
@@ -65,7 +66,9 @@
                                 class="btn btn-xs btn-danger">
                             Delete
                         </button>
-                        <button @click="resetToFile(string)" class="btn btn-xs btn-default" v-if="hasChanges(string)">Reset</button>
+                        <button @click="resetToFile(string)" class="btn btn-xs btn-default" v-if="hasChanges(string)">
+                            Reset
+                        </button>
                     </td>
                 </tr>
                 </tbody>
@@ -107,9 +110,10 @@
                         <div class="row" v-for="(key, index) in newKeys" style="padding-bottom: 5px;">
                             <div class="col-md-12">
                                 <div class="input-group">
-                                    <input type="text" v-model="key.value" class="form-control input-sm" />
+                                    <input type="text" v-model="key.value" class="form-control input-sm"/>
                                     <span class="input-group-btn">
-                                        <button @click="newKeys.splice(index, 1)" class="btn btn-danger btn-sm"><i class="glyphicon glyphicon-remove"></i></button>
+                                        <button @click="newKeys.splice(index, 1)" class="btn btn-danger btn-sm"><i
+                                                class="glyphicon glyphicon-remove"></i></button>
                                     </span>
                                 </div>
                             </div>
@@ -164,7 +168,7 @@
                 return this.$store.state.current < 0 ? [] : this.$store.state.translations[this.$store.state.current].data;
             },
             filteredTranslations() {
-                if(this.filter == '')
+                if (this.filter == '')
                     return this.translations;
 
                 var self = this;
@@ -175,11 +179,11 @@
                         this.translations,
                         ((string) => {
                             return (
-                                string.key.indexOf(self.filter) >= 0 ||
-                                string.locales[self.$store.state.locale].value.indexOf(self.filter) >= 0
+                                    string.key.indexOf(self.filter) >= 0 ||
+                                    string.locales[self.$store.state.locale].value.indexOf(self.filter) >= 0
                             );
                         })
-                    );
+                );
             }
         },
         methods: {
@@ -188,13 +192,17 @@
                 // Return a list of locales for the specified string
                 let filledLocales = _.reject(
                         string.locales,
-                        (l) => { return l.value == null}
-                    );
+                        (l) => {
+                            return l.value == null
+                        }
+                );
 
                 if (filledLocales.length == 0)
                     return '';
 
-                return _.map(filledLocales, (l) => {return l.locale;}).join(', ');
+                return _.map(filledLocales, (l) => {
+                    return l.locale;
+                }).join(', ');
             },
             locale(strings) {
                 return _.keys(strings.locales);
@@ -224,39 +232,48 @@
             },
             createKeys() {
                 // If already loading, do nothing
-                if(this.loading.create.disabled)
+                if (this.loading.create.disabled)
                     return;
 
                 // Remove any empty values
-                this.newKeys = _.pickBy(this.newKeys, (k) => { return k.value != ''});
+                this.newKeys = _.pickBy(this.newKeys, (k) => {
+                    return k.value != ''
+                });
 
                 // Start loader
                 this.loading.create.disabled = true;
 
-                this.$http.post(laroute.route('translations.keys.create', {group: this.$route.params.group}), {locale: this.$store.state.locale,keys: this.newKeys})
+                this.$http
+                        .post(laroute.route('translations.keys.create', {manager: this.$route.meta.manager, group: this.$route.params.group}), {
+                            locale: this.$store.state.locale,
+                            keys: this.newKeys
+                        })
                         .then((response) => {
-                            switch(response.body.status)
-                            {
+                            switch (response.body.status) {
                                 case 'success':
-                                    if(response.body.errors > 0)
-                                    {
+                                    if (response.body.errors > 0) {
                                         this.newKeys = _.reduce(response.body.keys, ['error', false]);
                                         this.createError = 'Not all keys could be created';
-                                    }
-                                    else
-                                    {
-                                        $('#new-strings').modal('hide');
 
-                                        // reload the translations
-                                        this.loadGroup({group: this.$route.params.group})
+                                        let self = this;
+                                        $('#new-strings').modal('show').one('hide.bs.modal', () => {
+                                            self.loadGroup({manager: self.$route.meta.manager, group: self.$route.params.group})
+                                        });
+                                        return;
                                     }
+
+                                    $('#new-strings').modal('hide');
+
+                                    // reload the translations
+                                    this.loadGroup({manager: this.$route.meta.manager, group: this.$route.params.group})
+
                                     break;
                                 case 'error':
                                     let self = this;
                                     this.createError = response.body.message;
 
                                     // Mark all as errored
-                                    _.each(this.newKeys, function(key, index){
+                                    _.each(this.newKeys, function (key, index) {
                                         self.newKeys[index].error = true;
                                     })
                                     break;
@@ -275,12 +292,13 @@
 
                 this.$http
                         .delete(laroute.route('translations.keys.delete', {
+                            manager: this.$route.meta.manager,
                             group: this.$route.params.group,
                             key: string.key
                         }))
                         .then((response) => {
                             // reload the translations
-                            this.loadGroup({group: this.$route.params.group});
+                            this.loadGroup({manager: this.$route.meta.manager, group: this.$route.params.group});
 
                             // Update stats
                             this.$store.commit('changeStat', {type: 'keys', value: response.body.records});
@@ -299,7 +317,7 @@
 
                 // Send request
                 this.$http
-                        .post(laroute.route('translations.keys.local', {group: this.$route.params.group}), this.string)
+                        .post(laroute.route('translations.keys.local', {manager: this.$route.meta.manager, group: this.$route.params.group}), this.string)
                         .then((response) => {
                             switch (response.body.status) {
                                 case 'success':
@@ -350,7 +368,7 @@
 
                 // Send request
                 this.$http
-                        .post(laroute.route('translations.keys.update', {group: this.$route.params.group}), this.string)
+                        .post(laroute.route('translations.keys.update', {manager: this.$route.meta.manager, group: this.$route.params.group}), this.string)
                         .then((response) => {
                             switch (response.body.status) {
                                 case 'success':
@@ -424,7 +442,7 @@
             },
             _btnRequest(key, route, success) {
                 // If already loading, do nothing
-                if(this.loading[key].disabled)
+                if (this.loading[key].disabled)
                     return;
 
                 // Start button loader
@@ -432,7 +450,7 @@
 
                 // Send request
                 this.$http
-                        .get(laroute.route(route, {group: this.$route.params.group}))
+                        .get(laroute.route(route, {manager: this.$route.meta.manager, group: this.$route.params.group}))
                         .then(success)
                         .catch((response) => {
                             // Request error

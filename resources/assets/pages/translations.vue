@@ -23,7 +23,7 @@
             this.syncRoute();
 
             if(this.$route.params.group) {
-                this.loadGroup({group: this.$route.params.group});
+                this.loadGroup({manager: this.$route.meta.manager, group: this.$route.params.group});
             }
         },
         watch: {
@@ -54,7 +54,7 @@
                 }
 
                 // Check for strings in the group
-                this.loadGroup({group: this.activeGroup})
+                this.loadGroup({manager: this.$route.meta.manager, group: this.activeGroup})
 
                 // Load the specified group
                 this.$router.push({

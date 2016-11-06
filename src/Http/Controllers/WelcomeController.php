@@ -6,16 +6,17 @@ namespace DragonFly\TranslationManager\Http\Controllers;
 use Carbon\Carbon;
 use DragonFly\TranslationManager\Manager;
 use DragonFly\TranslationManager\Models\TranslationString;
+use Illuminate\Routing\Router;
 use Illuminate\View\View;
 
 class WelcomeController
 {
-    /** @var \DragonFly\TranslationManager\Managers\BaseManager */
+    /** @var \DragonFly\TranslationManager\Managers\Template\Manager */
     protected $manager;
     
-    public function __construct()
+    public function __construct(Router $router)
     {
-        $this->manager = (new Manager())->make();
+        $this->manager = (new Manager())->make($router->current()->parameter('manager', 'laravel'));
     }
     
     /**
@@ -62,7 +63,7 @@ class WelcomeController
      *
      * @return \Illuminate\Http\JsonResponse
      */
-    public function getLoadGroupTranslations($group, $timestamp = false)
+    public function getLoadGroupTranslations($manager, $group, $timestamp = false)
     {
         $translations = TranslationString::where('group', $group)->orderBy('last_updated', 'DESC');
         

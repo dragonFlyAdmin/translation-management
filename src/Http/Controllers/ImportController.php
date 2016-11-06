@@ -10,9 +10,9 @@ class ImportController
     /** @var \DragonFly\TranslationManager\Managers\Template\Manager */
     protected $manager;
     
-    public function __construct()
+    public function __construct(Router $router)
     {
-        $this->manager = (new Manager())->make();
+        $this->manager = (new Manager())->make($router->current()->parameter('manager', 'laravel'));
     }
     
     /**
@@ -20,7 +20,7 @@ class ImportController
      *
      * @return \Illuminate\Http\JsonResponse
      */
-    public function getScan()
+    public function getScan($manager)
     {
         if(!$this->manager->can('scan'))
         {
@@ -46,7 +46,7 @@ class ImportController
      *
      * @return \Illuminate\Http\JsonResponse
      */
-    public function getAppend()
+    public function getAppend($manager)
     {
         $importedKeys = $this->manager->actions()->import('*', false);
         
@@ -66,7 +66,7 @@ class ImportController
      *
      * @return \Illuminate\Http\JsonResponse
      */
-    public function getAppendGroup($group)
+    public function getAppendGroup($manager, $group)
     {
         $importedKeys = $this->manager->actions()->import($group, false);
         
@@ -84,7 +84,7 @@ class ImportController
      *
      * @return \Illuminate\Http\JsonResponse
      */
-    public function getReplace()
+    public function getReplace($manager)
     {
         $importedKeys = $this->manager->actions()->import('*', true);
         
@@ -105,7 +105,7 @@ class ImportController
      *
      * @return \Illuminate\Http\JsonResponse
      */
-    public function getReplaceGroup($group)
+    public function getReplaceGroup($manager, $group)
     {
         $importedKeys = $this->manager->actions()->import($group, true);
         

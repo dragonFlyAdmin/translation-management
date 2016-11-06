@@ -7,12 +7,12 @@ use DragonFly\TranslationManager\Manager;
 
 class exportController
 {
-    /** @var \DragonFly\TranslationManager\Managers\BaseManager */
+    /** @var \DragonFly\TranslationManager\Managers\Template\Manager */
     protected $manager;
     
-    public function __construct()
+    public function __construct(Router $router)
     {
-        $this->manager = (new Manager())->make();
+        $this->manager = (new Manager())->make($router->current()->parameter('manager', 'laravel'));
     }
     
     /**
@@ -20,7 +20,7 @@ class exportController
      *
      * @return \Illuminate\Http\JsonResponse
      */
-    public function getExport()
+    public function getExport($manager)
     {
         $this->manager->actions()->export('*');
         
@@ -36,7 +36,7 @@ class exportController
      *
      * @return \Illuminate\Http\JsonResponse
      */
-    public function getExportGroup($group)
+    public function getExportGroup($manager, $group)
     {
         $this->manager->actions()->export($group);
         

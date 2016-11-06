@@ -122,6 +122,13 @@ class Actions extends BaseActions
         TranslationString::truncate();
     }
     
+    /**
+     * Load the manager's local translation group(s).
+     *
+     * @param string $group
+     *
+     * @return false | Collection
+     */
     protected function loadLocalGroups($group)
     {
         // If it's just one group and it's excluded, don't run this method

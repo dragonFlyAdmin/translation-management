@@ -62,7 +62,7 @@ abstract class Actions
     }
     
     /**
-     * Load the requests local translation group(s).
+     * Load the manager's local translation group(s).
      *
      * @param string $group
      *

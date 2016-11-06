@@ -8,12 +8,12 @@ use Illuminate\Http\Request;
 
 class ActionsController
 {
-    /** @var \DragonFly\TranslationManager\Managers\BaseManager */
+    /** @var \DragonFly\TranslationManager\Managers\Template\Manager */
     protected $manager;
     
-    public function __construct()
+    public function __construct(Router $router)
     {
-        $this->manager = (new Manager())->make();
+        $this->manager = (new Manager())->make($router->current()->parameter('manager', 'laravel'));
     }
     
     /**
@@ -21,7 +21,7 @@ class ActionsController
      *
      * @return \Illuminate\Http\JsonResponse
      */
-    public function getClean()
+    public function getClean($manager)
     {
         $this->manager->actions()->clean();
         
@@ -39,7 +39,7 @@ class ActionsController
      *
      * @return \Illuminate\Http\JsonResponse
      */
-    public function getTruncate()
+    public function getTruncate($manager)
     {
         $this->manager->actions()->truncate();
         
@@ -55,7 +55,7 @@ class ActionsController
      *
      * @return \Illuminate\Http\JsonResponse
      */
-    public function postCreateLocale(Request $request)
+    public function postCreateLocale(Request $request,$manager)
     {
         // Check if the manager supports this feature
         if(!$this->manager->can('locale.create'))
