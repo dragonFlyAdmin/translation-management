@@ -356,7 +356,7 @@
                 this._btnRequest('exportGroup', 'translations.export.group', (response) => {
                     // group was exported
                     this.$store.commit('changeStat', {type: 'changed', value: response.body.changed});
-                    this.$store.commit('markGroupSaved', this.$route.params.group);
+                    this.$nextTick(() => { this.$store.commit('markGroupSaved', this.$route.params.group);})
                 });
             },
             importAppend(){

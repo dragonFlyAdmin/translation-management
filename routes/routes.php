@@ -22,4 +22,5 @@ Route::get('api/export/{group}', 'ExportController@getExportGroup')->name('trans
 // Translation keys
 Route::delete('api/keys/{group}/{key}', 'KeyController@deleteRemoveKey')->name('translations.keys.delete');
 Route::post('api/keys/{group}', 'KeyController@postSaveTranslation')->name('translations.keys.update');
+Route::post('api/keys/{group}/create', 'KeyController@postCreateKeys')->name('translations.keys.create');
 Route::post('api/keys/{group}/local', 'KeyController@postReplaceWithLocal')->name('translations.keys.local');
