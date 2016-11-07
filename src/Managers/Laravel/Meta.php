@@ -3,6 +3,7 @@
 namespace DragonFly\TranslationManager\Managers\Laravel;
 
 
+use Carbon\Carbon;
 use DragonFly\TranslationManager\Managers\Template\Meta as BaseMeta;
 use DragonFly\TranslationManager\Models\TranslationString;
 use Illuminate\Support\Collection;
@@ -100,5 +101,64 @@ class Meta extends BaseMeta
         $groups = ['' => 'Choose a group'] + $groups;
         
         return $groups;
+    }
+    
+    /**
+     * Load all the translation keys for the specified group.
+     *
+     * If a timestamp is provided, it will only load translations that were updated after the timestamp.
+     *
+     * @param string $group
+     * @param bool   $timestamp
+     *
+     * @return array|bool
+     */
+    public function loadTranslations($group, $timestamp = false)
+    {
+        $translations = TranslationString::where('group', $group)->orderBy('last_updated', 'DESC');
+        
+        // If a time stamp was specified, convert it to the standard updated_at format
+        if ($timestamp !== false)
+        {
+            $dateTime = Carbon::createFromTimestamp($timestamp)->format('Y-m-d H:i:s');
+            $translations->where('updated_at', '>', $dateTime);
+        }
+        
+        $foundRecords = $translations->get();
+        
+        // No translations were found
+        if ($foundRecords->count() == 0)
+        {
+            return false;
+        }
+        
+        // Get the last updated record's timestamp
+        $lastUpdated = $foundRecords[0]->updated_at->format('U');
+        
+        // Reformat the data
+        $strings = $foundRecords
+            ->sortBy('key')
+            ->groupBy('key')
+            ->map(function ($items)
+            {
+                return [
+                    'key' => $items[0]->key,
+                    'locales' => $items
+                        ->mapWithKeys(function ($item)
+                        {
+                            return [
+                                $item['locale'] => [
+                                    'key' => $item['key'],
+                                    'value' => $item['value'],
+                                    'group' => $item['group'],
+                                    'status' => $item['status'],
+                                    'locale' => $item['locale'],
+                                ],
+                            ];
+                        }),
+                ];
+            })->toArray();
+        
+        return [$strings, $lastUpdated];
     }
 }

@@ -3,17 +3,22 @@
 namespace DragonFly\TranslationManager\Http\Controllers;
 
 
-use DragonFly\TranslationManager\Manager;
+use DragonFly\TranslationManager\Managers;
 use Illuminate\Http\Request;
+use Illuminate\Routing\Router;
 
 class ActionsController
 {
     /** @var \DragonFly\TranslationManager\Managers\Template\Manager */
     protected $manager;
     
+    /** @var \DragonFly\TranslationManager\Managers */
+    protected $loader;
+    
     public function __construct(Router $router)
     {
-        $this->manager = (new Manager())->make($router->current()->parameter('manager', 'laravel'));
+        $this->loader = new Managers();
+        $this->manager = $this->loader->make($router->current()->parameter('manager', 'laravel'));
     }
     
     /**
@@ -23,7 +28,12 @@ class ActionsController
      */
     public function getClean($manager)
     {
-        $this->manager->actions()->clean();
+        $managers = $this->loader->managers();
+        
+        foreach($managers as $name)
+        {
+            $this->loader->make($name)->actions()->clean();
+        }
         
         return response()->json([
             'status' => 'success',
@@ -41,7 +51,12 @@ class ActionsController
      */
     public function getTruncate($manager)
     {
-        $this->manager->actions()->truncate();
+        $managers = $this->loader->managers();
+    
+        foreach($managers as $name)
+        {
+            $this->loader->make($name)->actions()->truncate();
+        }
         
         return response()->json([
             'status' => 'success'

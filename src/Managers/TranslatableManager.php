@@ -1,16 +1,16 @@
 <?php
 
-namespace DragonFly\TranslationManager\Managers\Dimsav;
+namespace DragonFly\TranslationManager\Managers;
 
 
-trait TranslatableFront
+trait TranslatableManager
 {
     /**
      * Return the key we'll use to render the value in the translation manager.
      *
      * @return string
      */
-    public function getUIKey()
+    public function getTranslationUIKey()
     {
         if(property_exists($this, 'represent_translation'))
         {
@@ -18,15 +18,6 @@ trait TranslatableFront
         }
         
         return $this->translatedAttributes[0];
-    }
-    
-    /**
-     * Get the value of the translation key for the translation manager
-     * @return mixed
-     */
-    public function getUIValue()
-    {
-        return $this->{$this->getUIKey()};
     }
     
     /**

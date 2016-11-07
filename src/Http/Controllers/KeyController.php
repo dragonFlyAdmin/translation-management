@@ -3,8 +3,9 @@
 namespace DragonFly\TranslationManager\Http\Controllers;
 
 
-use DragonFly\TranslationManager\Manager;
+use DragonFly\TranslationManager\Managers;
 use Illuminate\Http\Request;
+use Illuminate\Routing\Router;
 
 class KeyController
 {
@@ -13,7 +14,7 @@ class KeyController
     
     public function __construct(Router $router)
     {
-        $this->manager = (new Manager())->make($router->current()->parameter('manager', 'laravel'));
+        $this->manager = (new Managers())->make($router->current()->parameter('manager', 'laravel'));
     }
     
     /**

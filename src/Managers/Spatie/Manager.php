@@ -1,6 +1,6 @@
 <?php
 
-namespace DragonFly\TranslationManager\Managers\Dimsav;
+namespace DragonFly\TranslationManager\Managers\Spatie;
 
 
 use DragonFly\TranslationManager\Managers\Template\Manager as BaseManager;

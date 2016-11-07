@@ -18,7 +18,7 @@ abstract class Manager
     /** @var array Main translations manager config*/
     public $config;
     /** @var array Config values specific for this manager*/
-    protected $managerConfig;
+    public $managerConfig;
     
     public $managerName = false;
     

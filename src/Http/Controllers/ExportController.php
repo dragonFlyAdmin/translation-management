@@ -3,7 +3,8 @@
 namespace DragonFly\TranslationManager\Http\Controllers;
 
 
-use DragonFly\TranslationManager\Manager;
+use DragonFly\TranslationManager\Managers;
+use Illuminate\Routing\Router;
 
 class exportController
 {
@@ -12,7 +13,7 @@ class exportController
     
     public function __construct(Router $router)
     {
-        $this->manager = (new Manager())->make($router->current()->parameter('manager', 'laravel'));
+        $this->manager = (new Managers())->make($router->current()->parameter('manager', 'laravel'));
     }
     
     /**

@@ -4,7 +4,7 @@ namespace DragonFly\TranslationManager\Http\Controllers;
 
 
 use Carbon\Carbon;
-use DragonFly\TranslationManager\Manager;
+use DragonFly\TranslationManager\Managers;
 use DragonFly\TranslationManager\Models\TranslationString;
 use Illuminate\Routing\Router;
 use Illuminate\View\View;
@@ -14,9 +14,13 @@ class WelcomeController
     /** @var \DragonFly\TranslationManager\Managers\Template\Manager */
     protected $manager;
     
+    /** @var \DragonFly\TranslationManager\Managers */
+    protected $loader;
+    
     public function __construct(Router $router)
     {
-        $this->manager = (new Manager())->make($router->current()->parameter('manager', 'laravel'));
+        $this->loader = new Managers();
+        $this->manager = $this->loader->make($router->current()->parameter('manager', 'laravel'));
     }
     
     /**
@@ -29,6 +33,7 @@ class WelcomeController
         $groups = $this->manager->meta()->loadGroups();
         
         return view('translations-manager::welcome')
+            ->with('manager', $this->loader->managers())
             ->with('locales', $this->manager->meta()->loadLocales())
             ->with('groups', $groups)
             ->with('defaultLocale', config('app.locale'))
@@ -65,19 +70,10 @@ class WelcomeController
      */
     public function getLoadGroupTranslations($manager, $group, $timestamp = false)
     {
-        $translations = TranslationString::where('group', $group)->orderBy('last_updated', 'DESC');
-        
-        // If a time stamp was specified, convert it to the standard updated_at format
-        if ($timestamp !== false)
-        {
-            $dateTime = Carbon::createFromTimestamp($timestamp)->format('Y-m-d H:i:s');
-            $translations->where('updated_at', '>', $dateTime);
-        }
-        
-        $foundRecords = $translations->get();
+        $translations = $this->manager->meta()->loadTranslations($group, $timestamp);
         
         // No translations were found
-        if ($foundRecords->count() == 0)
+        if ($translations === false)
         {
             return response()->json([
                 'status' => 'empty',
@@ -85,32 +81,7 @@ class WelcomeController
             ]);
         }
         
-        // Get the last updated record's timestamp
-        $lastUpdated = $foundRecords[0]->updated_at->format('U');
-        
-        // Reformat the data
-        $strings = $foundRecords
-            ->sortBy('key')
-            ->groupBy('key')
-            ->map(function ($items)
-            {
-                return [
-                    'key' => $items[0]->key,
-                    'locales' => $items
-                        ->mapWithKeys(function ($item)
-                        {
-                            return [
-                                $item['locale'] => [
-                                    'key' => $item['key'],
-                                    'value' => $item['value'],
-                                    'group' => $item['group'],
-                                    'status' => $item['status'],
-                                    'locale' => $item['locale'],
-                                ],
-                            ];
-                        }),
-                ];
-            })->toArray();
+        list($strings, $lastUpdated) = $translations;
         
         return response()->json([
             'status' => ( $timestamp === false ) ? 'new' : 'update',

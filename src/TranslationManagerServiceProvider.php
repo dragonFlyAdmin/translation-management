@@ -94,7 +94,7 @@ class TranslationManagerServiceProvider extends ServiceProvider
         );
         
         //Register the dimsav translation manager
-        $this->app->instance(
+        $this->app->singleton(
             'DragonFly\TranslationManager\Managers\Dimsav',
             function ($app)
             {

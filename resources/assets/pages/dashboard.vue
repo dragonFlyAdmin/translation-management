@@ -48,47 +48,6 @@
             </div>
             <div class="row">
                 <div class="col-md-3">
-                    <div class="panel panel-success">
-                        <div class="panel-heading">
-                            <h4 style="margin: 5px;">Sync</h4>
-                        </div>
-                    </div>
-                </div>
-                <div class="col-md-9">
-                    <div class="row">
-                        <div class="col-md-3">
-                            <div class="panel panel-success" style="cursor: pointer;" @click="importAppend">
-                                <div :class="{'panel-body': true, 'text-muted': loading.importAppend.loading}" :style="{'background': loading.importAppend.background, 'transition-duration': '0.3s'}">
-                                    Import <small class="text-muted pull-right" style="padding-top: 4px;">append</small>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="col-md-3">
-                            <div class="panel panel-success" style="cursor: pointer;" @click="importReplaceConfirm">
-                                <div :class="{'panel-body': true, 'text-muted': importReplace.loading}" :style="{'background': loading.importReplace.background, 'transition-duration': '0.3s'}">
-                                    Import <small class="text-muted pull-right" style="padding-top: 4px;">replace</small>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="col-md-3">
-                            <div class="panel panel-success" style="cursor: pointer;" @click="scan">
-                                <div :class="{'panel-body': true, 'text-muted': loading.scan.loading}" :style="{'background': loading.scan.background, 'transition-duration': '0.3s'}">
-                                    Scan files
-                                </div>
-                            </div>
-                        </div>
-                        <div class="col-md-3">
-                            <div class="panel panel-success" style="cursor: pointer;" @click="exportAll">
-                                <div :class="{'panel-body': true, 'text-muted': loading.exportAll.loading}" :style="{background: loading.exportAll.background, 'transition-duration': '0.3s'}">
-                                    Export
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-            <div class="row">
-                <div class="col-md-3">
                     <div class="panel panel-info">
                         <div class="panel-heading">
                             <h4 style="margin: 5px;">Actions</h4>
@@ -129,10 +88,6 @@
                     </p>
                 </div>
                 <button slot="button" type="button" @click="truncate" class="btn btn-primary">Truncate</button>
-            </modal>
-            <modal id="importReplace">
-                <p slot="content">You are about to replace all strings in the database with local ones.</p>
-                <button slot="button" type="button" @click="importReplace" class="btn btn-primary">Replace</button>
             </modal>
             <modal id="newLocale">
                 <div :class="newLocale.classes" slot="content">
@@ -239,7 +194,7 @@
             },
             truncate(){
                 $('#truncate').modal('hide');
-                this._doRequest('truncate', '#F0F8FF', laroute.route('translations.truncate'), (response) => {
+                this._doRequest('truncate', '#F0F8FF', laroute.route('translations.truncate', {manager: 'laravel'}), (response) => {
                     // Update stats and groups
                     this.$store.commit('changeStat', {type: 'keys', value: 0});
                     this.$store.commit('changeStat', {type: 'changed', value: 0});
@@ -251,7 +206,7 @@
                 $('#truncate').modal('show');
             },
             clean(){
-                this._doRequest('clean', '#F0F8FF', laroute.route('translations.clean'), (response) => {
+                this._doRequest('clean', '#F0F8FF', laroute.route('translations.clean', {manager: 'laravel'}), (response) => {
                     // Update stats and groups
                     this.$store.commit('changeStat', {type: 'keys', value: response.body.records});
                     this.$store.commit('changeStat', {type: 'locales', value: response.body.locales});
@@ -279,7 +234,7 @@
                 this.loading.locale.background = '#F0F8FF';
 
                 this.$http
-                        .post(laroute.route('translations.locale'), {locale: this.newLocale.value})
+                        .post(laroute.route('translations.locale', {manager: 'laravel'}), {locale: this.newLocale.value})
                         .then((response) => {
                             if(response.body.status == 'success')
                             {

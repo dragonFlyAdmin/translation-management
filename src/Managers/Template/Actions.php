@@ -21,7 +21,7 @@ abstract class Actions
      */
     public function clean()
     {
-        TranslationExternal::whereNull('value')->where('manager', $this->managerName)->delete();
+        TranslationExternal::whereNull('value')->where('manager', $this->manager->managerName)->delete();
     }
     
     /**
@@ -168,8 +168,6 @@ abstract class Actions
     /**
      * Update a translation key's value in the specified locales.
      *
-     * @todo in the third party managers the value will probably be an array
-     *
      * @param string $group
      * @param string $key
      * @param array  $locales
@@ -188,8 +186,7 @@ abstract class Actions
                 'model_id' => $key,
             ], [
                 'status' => $status,
-                // @todo in the third party managers this will probably be an array
-                'value' => ( $translation['value'] == '' ) ? null : $translation['value'],
+                'value' => ( $translation['value'] == '' || count($translation['value']) == 0 ) ? null : $translation['value'],
             ]);
         }
     }
