@@ -12,27 +12,45 @@ trait TranslatableManager
      */
     public function getTranslationUIKey()
     {
+        if(property_exists($this, 'default_translation_key'))
+        {
+            return $this->default_translation_key;
+        }
+        
+        // Otherwise, grab the first defined translated attribute.
+        return $this->translatedAttributes[0];
+    }
+    
+    /**
+     * Return the key we'll use to show a more contextual reference in the UI.
+     *
+     * @return string
+     */
+    public function getTranslationUIIdentifier()
+    {
         if(property_exists($this, 'represent_translation'))
         {
             return $this->represent_translation;
         }
         
+        // Otherwise, grab the first defined translated attribute.
         return $this->translatedAttributes[0];
     }
     
     /**
-     * Get the translation slug for storing records of this model.
      * @return string
      */
-    public function getTranslationSlug()
+    public function getTranslationUIValue()
     {
-        // If the model provides a 'translation_slug' property, use it
-        if(property_exists($this, 'translation_slug') && !empty($this->translation_slug))
-        {
-            return $this->translation_slug;
-        }
-        
-        // return the class name
-        return strtolower(array_slice(explode('\\', __CLASS__), -1));
+        return $this->{$this->getTranslationUIIdentifier()};
+    }
+    
+    /**
+     * Check if the model is set up correct for its translations to be managed.
+     * @return bool
+     */
+    public function translationsCanBeManaged()
+    {
+        return property_exists($this, 'translation_slug') && $this->translation_slug != '';
     }
 }

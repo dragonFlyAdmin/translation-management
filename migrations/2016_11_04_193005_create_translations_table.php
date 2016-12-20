@@ -15,6 +15,7 @@ class CreateTranslationsTable extends Migration {
         Schema::create('translation_strings', function(Blueprint $table)
         {
             $table->increments('id');
+            $table->string('manager');
             $table->integer('status')->default(0);
             $table->string('locale');
             $table->string('group');

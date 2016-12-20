@@ -4,6 +4,7 @@ namespace DragonFly\TranslationManager\Http\Controllers;
 
 
 use DragonFly\TranslationManager\Managers;
+use DragonFly\TranslationManager\Models\TranslationString;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Router;
 
@@ -30,12 +31,12 @@ class KeyController
         $key = $request->input('key');
         $locales = $request->input('locales');
         
-        $this->manager->actions()->updateRecord($group, $key, $locales);
+        $this->manager->store()->update($group, $key, $locales);
         
         return response()->json([
             'status' => 'success',
             'updates' => count($locales),
-            'changed' => $this->manager->meta()->loadAmountChangedRecords(),
+            'changed' => $this->manager->store()->amountChangedRecords(),
         ]);
     }
     
@@ -49,9 +50,9 @@ class KeyController
      */
     public function postReplaceWithLocal(Request $request, $manager, $group)
     {
-        $resetTranslations = $this->manager->actions()->replaceRecordWithLocal($group, $request->input('key'));
-        
-        if (!$resetTranslations)
+        $translations = $this->manager->local()->value($group, $request->input('key'));
+    
+        if (count($translations) == 0 || $translations == false)
         {
             return response()->json([
                 'status' => 'error',
@@ -59,10 +60,30 @@ class KeyController
             ]);
         }
         
+        // Delete stored translaions
+        TranslationString::where('manager', $this->manager->managerName)
+            ->where('group', $group)
+            ->where('key', $request->input('key'))
+            ->delete();
+    
+        
+        // Add the existing translations
+        foreach ($translations as $locale => $string)
+        {
+            TranslationString::create([
+                'manager' => $this->manager->managerName,
+                'group' => $group,
+                'key' => $request->input('key'),
+                'locale' => $locale,
+                'value' => $string,
+                'status' => TranslationString::STATUS_SAVED
+            ]);
+        }
+        
         return response()->json([
             'status' => 'success',
-            'changed' => $this->manager->meta()->loadAmountChangedRecords(),
-            'updates' => $resetTranslations,
+            'changed' => $this->manager->store()->amountChangedRecords(),
+            'updates' => count($translations),
         ]);
     }
     
@@ -75,7 +96,7 @@ class KeyController
      */
     public function deleteRemoveKey($manager, $group, $key)
     {
-        if (!$this->manager->getConfig('features')['delete_translations'])
+        if (!$this->manager->config['features']['delete_translations'])
         {
             return response()->json([
                 'status' => 'unauthorized',
@@ -83,15 +104,15 @@ class KeyController
             ]);
         }
         
-        $keyCount = $this->manager->actions()->removeRecord($group, $key);
+        $keyCount = $this->manager->store()->remove($group, $key);
         
         return response()->json([
             'status' => 'success',
             'deleted_entries' => ( !$keyCount ) ? 0 : $keyCount,
-            'records' => $this->manager->meta()->uniqueKeys()->count(),
-            'groups' => $this->manager->meta()->loadGroups(),
-            'locales' => $this->manager->meta()->loadLocales(),
-            'changed' => $this->manager->meta()->loadAmountChangedRecords(),
+            'records' => $this->manager->store()->uniqueKeysCount(),
+            'groups' => $this->manager->store()->groups(),
+            'locales' => $this->manager->store()->locales(),
+            'changed' => $this->manager->store()->amountChangedRecords(),
         ]);
     }
     
@@ -105,7 +126,7 @@ class KeyController
      */
     public function postCreateKeys(Request $request, $manager, $group)
     {
-        if (!$this->manager->can('string.create'))
+        if (!$this->manager->canCreateLocal())
         {
             return response()->json([
                 'status' => 'unauthorized',
@@ -115,19 +136,44 @@ class KeyController
         
         $newKeys = $request->input('keys');
         $locale = $request->input('locale');
+    
+        $errors = 0;
+    
+        foreach ($newKeys as $i => $key)
+        {
+            // Mark it as an error if it already exists
+            if (TranslationString::where('group', $group)
+                    ->where('key', $key['value'])
+                    ->where('manager', $this->manager->managerName)
+                    ->count() > 0)
+            {
+                $newKeys[$i]['error'] = true;
+                $errors++;
+                continue;
+            }
         
-        $createdRecords = $this->manager->actions()->createRecords($group, $newKeys, $locale);
+            // Create the new key
+            TranslationString::create([
+                'group' => $group,
+                'key' => $key['value'],
+                'value' => ['value' => null],
+                'locale' => $locale,
+                'manager' => $this->manager->managerName,
+                'status' => TranslationString::STATUS_CHANGED
+            ]);
+        }
+    
+        // Calculate the successfully created keys
+        $successfulSaves = count($newKeys) - $errors;
         
         // Error out if none were created
-        if ($createdRecords === false)
+        if ($successfulSaves == 0)
         {
             return response()->json([
                 'status' => 'error',
                 'message' => 'No keys were added, they all already exist.',
             ]);
         }
-        
-        list( $successfulSaves, $errors, $newKeys ) = $createdRecords;
         
         // (partial) success
         return response()->json([

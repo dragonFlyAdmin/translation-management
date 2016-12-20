@@ -24,7 +24,7 @@
                             </div>
                         </div>
                     </div>
-                    <div class="col-md-3">
+                    <div class="col-md-3" v-if="canScan">
                         <div class="panel panel-success" style="cursor: pointer;" @click="scan">
                             <div :class="{'panel-body': true, 'text-muted': loading.scan.loading}" :style="{'background': loading.scan.background, 'transition-duration': '0.3s'}">
                                 Scan files
@@ -34,7 +34,7 @@
                     <div class="col-md-3">
                         <div class="panel panel-success" style="cursor: pointer;" @click="exportAll">
                             <div :class="{'panel-body': true, 'text-muted': loading.exportAll.loading}" :style="{background: loading.exportAll.background, 'transition-duration': '0.3s'}">
-                                Export
+                                Export <small class="text-muted pull-right">{{changes}}</small>
                             </div>
                         </div>
                     </div>
@@ -47,8 +47,11 @@
         </modal>
         <div class="row">
             <div class="col-md-12">
-                <select class="form-control" @change="loadTranslationGroup" v-model="activeGroup">
-                    <option v-for="(option, index) in $store.state.groups" :value="index">{{option}}</option>
+                <select v-if="managerType == 'local'" class="form-control" @change="loadTranslationGroup" v-model="activeGroup">
+                    <option v-for="(option, index) in groups" :value="index">{{option.title}}</option>
+                </select>
+                <select v-if="managerType == 'external'" class="form-control" @change="loadTranslationGroup" v-model="activeGroup">
+                    <option v-for="(option, index) in groups" :value="index">{{option.title}}</option>
                 </select>
             </div>
         </div>
@@ -64,7 +67,9 @@
     import { mapActions } from 'vuex';
 
     import Modal from '../components/modal.vue';
+    import ManagerMixin from '../mixins/managers';
     export default {
+        mixins: [ManagerMixin],
         components: {
             modal: Modal
         },
@@ -73,12 +78,27 @@
             this.syncRoute();
 
             if(this.$route.params.group) {
-                this.loadGroup({manager: this.$route.meta.manager, group: this.$route.params.group});
+                this.loadGroup({manager: this.manager.namespace, group: this.$route.params.group});
             }
+
         },
         watch: {
             // call again the syncRoute method if the route changes
             '$route': 'syncRoute'
+        },
+        computed: {
+            changes() {
+                return this.$store.state[this.manager.namespace].stats.changed;
+            },
+            groups(){
+                return this.$store.state[this.manager.namespace].groups;
+            },
+            managerType() {
+                return this.$route.meta.type;
+            },
+            canScan() {
+                return this.$store.state[this.manager.namespace].features.scan;
+            }
         },
         data(){
             return {
@@ -116,48 +136,107 @@
             }
         },
         methods: {
-
+            updateActiveGroup(group){
+                this.$store.commit(this.manager.mutation('switchGroup'), group);
+            },
+            loadGroup(payload){
+                this.$store.dispatch(this.manager.action('loadGroup'), payload);
+            },
             exportAll(){
-                this._doRequest('exportAll', '#d1f9e0', laroute.route('translations.export', {manager: this.$route.meta.manager}), (response) => {
+                this._doRequest('exportAll', '#d1f9e0', laroute.route('translations.export', {manager: this.manager.namespace}), (response) => {
+                    this.successNotification({message: 'Stored translations were exported successfully!'});
+
                     // Update stats and groups
-                    this.$store.commit('changeStat', {type: 'changed', value: 0});
+                    this.$store.commit(this.manager.mutation('changeStat'), {type: 'changed', value: 0});
+
+                    // Recalculate global stats
+                    this.$store.commit('recalculateStats');
 
                     // Mark all the groups' strings as saved
                     _.each(this.$store.state.groups, (strings, name) => {
-                        this.$store.commit('markGroupSaved', name);
+                        this.$store.commit(this.manager.mutation('markGroupSaved'), name);
                     });
                 });
             },
             scan(){
-                this._doRequest('scan', '#d1f9e0', laroute.route('translations.scan', {manager: this.$route.meta.manager}), (response) => {
+                this._doRequest('scan', '#d1f9e0', laroute.route('translations.scan', {manager: this.manager.namespace}), (response) => {
+                    // If there was an error
+                    if(response.body.status == 'unauthorized')
+                    {
+                        this.errorNotification({message: response.body.message});
+                        return;
+                    }
+
+                    this.successNotification({message: 'Finished scanning for translations'});
+
                     // Update stats and groups
-                    this.$store.commit('changeStat', {type: 'keys', value: response.body.records});
-                    this.$store.commit('changeStat', {type: 'locales', value: response.body.locales});
-                    this.$store.commit('registerGroups', response.body.groups);
+                    this.$store.commit(this.manager.mutation('setLocales'), response.body.locales);
+                    this.$store.commit(this.manager.mutation('changeStats'), [
+                        {type: 'keys', value: response.body.records},
+                        {type: 'locales', value: response.body.locales.length}
+                    ]);
+
+                    // Recalculate global stats
+                    this.$store.commit('recalculateStats');
+
+                    this.$store.commit(this.manager.mutation('registerGroups'), response.body.groups);
+
+
+                    // If a group is active, reload its data
+                    if(this.$route.params.group) {
+                        this.loadGroup({group: this.$route.params.group});
+                    }
                 });
             },
             importAppend(){
-                this._doRequest('importAppend', '#d1f9e0', laroute.route('translations.import.append', {manager: this.$route.meta.manager}), (response) => {
+                this._doRequest('importAppend', '#d1f9e0', laroute.route('translations.import.append', {manager: this.manager.namespace}), (response) => {
+                    this.successNotification({message: 'The import was executed successfully!<br /> New items were appended (if any)'});
                     // Update stats and groups
-                    this.$store.commit('changeStat', {type: 'keys', value: response.body.records});
-                    this.$store.commit('changeStat', {type: 'locales', value: response.body.locales});
-                    this.$store.commit('registerGroups', response.body.groups);
+                    this.$store.commit(this.manager.mutation('setLocales'), response.body.locales);
+                    this.$store.commit(this.manager.mutation('changeStats'), [
+                        {type: 'keys', value: response.body.records},
+                        {type: 'locales', value: response.body.locales.length}
+                    ]);
+
+                    // Recalculate global stats
+                    this.$store.commit('recalculateStats');
+
+                    this.$store.commit(this.manager.mutation('registerGroups'), response.body.groups);
+
+
+                    // If a group is active, reload its data
+                    if(this.$route.params.group) {
+                        this.loadGroup({group: this.$route.params.group});
+                    }
                 });
             },
             importReplace(){
                 $('#importReplaceAll').modal('hide');
-                this._doRequest('importReplace', '#d1f9e0', laroute.route('translations.import.replace', {manager: this.$route.meta.manager}), (response) => {
+                this._doRequest('importReplace', '#d1f9e0', laroute.route('translations.import.replace', {manager: this.manager.namespace}), (response) => {
+                    this.successNotification({message: 'The import was executed successfully!<br /> Everything was replaced with the local translations.'});
                     // Update stats and groups
-                    this.$store.commit('changeStat', {type: 'keys', value: response.body.records});
-                    this.$store.commit('changeStat', {type: 'locales', value: response.body.locales});
-                    this.$store.commit('changeStat', {type: 'changed', value: response.body.changed});
-                    this.$store.commit('registerGroups', response.body.groups);
+                    this.$store.commit(this.manager.mutation('setLocales'), response.body.locales);
+
+                    this.$store.commit(this.manager.mutation('changeStats'), [
+                        {type: 'keys', value: response.body.records},
+                        {type: 'locales', value: response.body.locales.length},
+                        {type: 'changed', value: response.body.changed}
+                    ]);
+
+                    // Recalculate global stats
+                    this.$store.commit('recalculateStats');
+
+                    this.$store.commit(this.manager.mutation('registerGroups'), response.body.groups);
+
+                    // If a group is active, reload its data
+                    if(this.$route.params.group) {
+                        this.loadGroup({group: this.$route.params.group});
+                    }
                 });
             },
             importReplaceConfirm() {
                 $('#importReplaceAll').modal('show');
             },
-                ...mapActions(['loadGroup', 'updateActiveGroup']),
             syncRoute(){
                 // Set the active group based on the route param
                 this.activeGroup = this.$route.params.group || '';
@@ -169,17 +248,17 @@
                 if(this.activeGroup == '')
                 {
                     this.$router.push({
-                        name: 'translations'
+                        name: this.$route.meta.manager+'.translations'
                     });
                     return;
                 }
 
                 // Check for strings in the group
-                this.loadGroup({manager: this.$route.meta.manager, group: this.activeGroup})
+                this.loadGroup({group: this.activeGroup});
 
                 // Load the specified group
                 this.$router.push({
-                    name: 'group',
+                    name: this.$route.meta.manager+'.group',
                     params: {
                         group: this.activeGroup
                     }
@@ -195,6 +274,7 @@
                         .then(success)
                         .catch((response) => {
                             // Request error
+                            this.serverErrorNotification();
                         })
                         .finally(() => {
                             // Finish loading
@@ -204,6 +284,20 @@
                             // Empty local translations to prevent stale data
                         });
             }
-        }
+        },
+        notifications: {
+            errorNotification: {
+                message: 'Unable to complete the request',
+                type: 'error'
+            },
+            serverErrorNotification: {
+                message: 'Unable to complete request',
+                type: 'error'
+            },
+            successNotification: {
+                message: 'Finished scanning for translations',
+                type: 'success'
+            },
+        },
     }
 </script>

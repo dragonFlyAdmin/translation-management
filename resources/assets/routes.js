@@ -1,23 +1,8 @@
 import VueRouter from 'vue-router';
-import Translations from './pages/translations.vue';
-import Group from './pages/group.vue';
 import Dashboard from './pages/dashboard.vue';
+import _ from 'lodash';
 
-let routes = [
-    {
-        path: '/strings',
-        name: 'translations',
-        component: Translations,
-        meta: { manager: 'laravel' },
-        children: [
-            {
-                path: '/strings/:group?',
-                name: 'group',
-                component: Group,
-                meta: { manager: 'laravel' }
-            }
-        ]
-    },
+let defaultRoutes = [
     {
         path: '',
         name: 'dashboard',
@@ -25,7 +10,11 @@ let routes = [
     }
 ];
 
-export default new VueRouter({
-    mode: 'hash',
-    routes: routes
-})
+export default (routes) => {
+    _.each(routes, (route) => { defaultRoutes.push(route) });
+
+    return new VueRouter({
+        mode: 'hash',
+        routes: defaultRoutes
+    })
+}

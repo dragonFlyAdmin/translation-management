@@ -8,7 +8,7 @@ use Illuminate\Routing\Router;
 
 class exportController
 {
-    /** @var \DragonFly\TranslationManager\Managers\Template\Manager */
+    /** @var Managers\Manager */
     protected $manager;
     
     public function __construct(Router $router)
@@ -23,7 +23,15 @@ class exportController
      */
     public function getExport($manager)
     {
-        $this->manager->actions()->export('*');
+        $groups = $this->manager->store()->groups();
+        
+        foreach($groups as $id => $group)
+        {
+            if($id == '')
+                continue;
+            
+            $this->manager->local()->export($group['value'], $this->manager->store()->translations($group['value'])[0]);
+        }
         
         return response()->json([
             'status' => 'success'
@@ -39,11 +47,11 @@ class exportController
      */
     public function getExportGroup($manager, $group)
     {
-        $this->manager->actions()->export($group);
+        $this->manager->local()->export($group, $this->manager->store()->translations($group)[0]);
         
         return response()->json([
             'status' => 'success',
-            'changed' => $this->manager->meta()->loadAmountChangedRecords()
+            'changed' => $this->manager->store()->amountChangedRecords()
         ]);
     }
 }

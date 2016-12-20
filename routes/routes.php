@@ -9,6 +9,7 @@ Route::get('api/{manager}/groups/{group}/{timestamp?}', 'WelcomeController@getLo
 Route::post('api/{manager}/locale', 'ActionsController@postCreateLocale')->name('translations.locale');
 Route::get('api/{manager}/clean', 'ActionsController@getClean')->name('translations.clean');
 Route::get('api/{manager}/truncate', 'ActionsController@getTruncate')->name('translations.truncate');
+Route::get('api/all/import', 'ImportController@getAll')->name('translations.import');
 
 // Sync
 Route::get('api/{manager}/scan', 'ImportController@getScan')->name('translations.scan');

@@ -28,6 +28,7 @@
             window.groups = {!! json_encode($groups) !!};
             window.stats = {!! json_encode($stats) !!};
             window.features = {!! json_encode($features) !!};
+            window.managers = {!! json_encode($managers) !!};
             window.endpointUrl = '{{route('translations.dashboard')}}';
             window.csrfToken = "{{csrf_token()}}";
         </script>
@@ -36,6 +37,6 @@
                 integrity="sha256-hVVnYaiADRTO2PzUGmuLJr8BLUSjGIZsDYGmIJLv2b8="
                 crossorigin="anonymous"></script>
         <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"></script>
-        <script src="{{asset('js/dragonfly-translations.js')}}"></script>
+        <script src="{{asset('js/translations.js')}}"></script>
     </body>
 </html>

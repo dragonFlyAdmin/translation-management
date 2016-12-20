@@ -84,21 +84,29 @@ class TranslationManagerServiceProvider extends ServiceProvider
         // Merge the config
         $this->mergeConfigFrom(__DIR__ . $this->configPath, 'translations');
     
-        //Register the laravel translation manager
         $this->app->singleton(
-            'DragonFly\TranslationManager\Managers\Laravel',
+            'DragonFly\TranslationManager\Manager',
             function ($app)
             {
-                return $app->make('DragonFly\TranslationManager\Managers\Laravel\Manager');
+                return $app->make('DragonFly\TranslationManager\Managers\Manager');
             }
         );
         
-        //Register the dimsav translation manager
+        //Register the laravel translation repository
         $this->app->singleton(
-            'DragonFly\TranslationManager\Managers\Dimsav',
-            function ($app)
+            'DragonFly\TranslationManager\LaravelRepository',
+            function ($app, $params)
             {
-                return $app->make('DragonFly\TranslationManager\Managers\Dimsav\Manager');
+                return $app->make('DragonFly\TranslationManager\Managers\Drivers\Laravel', $params);
+            }
+        );
+        
+        //Register the dimsav translation repository
+        $this->app->singleton(
+            'DragonFly\TranslationManager\DimsavRepository',
+            function ($app, $params)
+            {
+                return $app->make('DragonFly\TranslationManager\Managers\Drivers\Dimsav', $params);
             }
         );
     }
